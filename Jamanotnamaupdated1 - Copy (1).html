@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RRF জামানতনামা অটোমেশন স্টুডিও (মাল্টি-ইউজার)</title>
+
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  
+  <!-- jQuery & Select2 -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <style>
+    @import url('https://fonts.maateen.me/nikosh/font.css');
+    * { font-family: 'Nikosh2', 'Nikosh2', Arial, sans-serif !important; }
+    body { background-color: #f1f5f9; }
+    
+    .doc-paragraph {
+      text-align: justify;
+      line-height: 1.7 !important;
+      margin-bottom: 0.8rem;
+      font-size: 11pt;
+      color: #000;
+    }
+
+    /* BOLD REMOVED: font-weight set to normal */
+    .blank-field {
+      border-bottom: 1px dotted #475569;
+      padding: 0 4px;
+      color: #1e3a8a;
+      font-weight: normal !important; 
+      display: inline-block;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .select2-container .select2-selection--single {
+      height: 38px !important;
+      border-color: #cbd5e1 !important;
+      border-radius: 0.5rem !important;
+      padding: 4px 8px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+      line-height: 28px !important;
+      font-size: 0.875rem !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+      height: 36px !important;
+    }
+
+    @page {
+      size: var(--page-size-print, 8.5in 14in);
+      margin: 10mm 15mm 10mm 15mm;
+    }
+
+    @media print {
+      .no-print { display: none !important; }
+      .print-container-wrapper { padding: 0 !important; margin: 0 !important; background: transparent !important; }
+      .doc-body { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; font-size: 13.5pt !important; }
+      .print-spacer { display: block !important; height: var(--stamp-height, 75mm) !important; }
+      .blank-field { color: #000 !important; border-bottom: none !important; font-weight: normal !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800" style="--stamp-height: 75mm; --page-size-print: 8.5in 14in;">
+
+  <!-- Web Application Container -->
+  <div class="max-w-[1550px] mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900 text-white rounded-2xl p-5 shadow-xl border border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-emerald-500/30">
+          <i class="fa-solid fa-file-contract"></i>
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
+            রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন (RRF) জামানতনামা
+            <span class="bg-emerald-500/20 text-emerald-300 text-xs px-2.5 py-0.5 rounded-full border border-emerald-500/30">গুগল ড্রাইভে সংরক্ষিত</span>
+          </h1>
+          <p class="text-slate-400 text-xs mt-0.5">রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন - স্টাফ এন্ট্রি ও অ্যাডমিন প্রিন্টিং সিস্টেম</p>
+        </div>
+      </div>
+
+      <!-- Mode Switch Buttons -->
+      <div class="flex items-center gap-3">
+        <button onclick="switchMode('staff')" id="btnStaffMode" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md transition">
+          <i class="fa-solid fa-pen-to-square"></i> স্টাফ ইনপুট মোড
+        </button>
+        <button onclick="switchMode('admin')" id="btnAdminMode" class="px-4 py-2 bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition">
+          <i class="fa-solid fa-user-shield"></i> অ্যাডমিন প্যানেল
+        </button>
+        <button onclick="window.print()" id="btnPrintBtn" class="hidden px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2">
+          <i class="fa-solid fa-print"></i> প্রিন্ট করুন
+        </button>
+      </div>
+    </header>
+
+    <!-- ADMIN PANEL OVERLAY -->
+    <div id="adminPanelSection" class="hidden bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 no-print">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4 border-b pb-4 border-slate-100">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-users text-indigo-600 text-lg"></i>
+          <h2 class="text-sm font-bold text-slate-800">জমা হওয়া স্টাফদের তালিকা (Google Sheet)</h2>
+        </div>
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <div class="w-full md:w-80">
+            <select id="staffDataDropdown" class="w-full">
+              <option value="">স্টাফের নাম, Unique ID বা NID সিলেক্ট করুন...</option>
+            </select>
+          </div>
+          <button onclick="fetchStaffListFromSheet()" class="px-3.5 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200 border flex items-center gap-1.5" title="রিফ্রেশ করুন">
+            <i class="fa-solid fa-rotate"></i> রিফ্রেশ
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN FORM & PREVIEW WORKSPACE -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT SIDE: INPUT FORM -->
+      <div id="formContainer" class="lg:col-span-5 space-y-6 no-print">
+
+        <!-- Staff Data Save Action -->
+        <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl flex items-center justify-between">
+          <div>
+            <h3 class="text-xs font-bold text-indigo-900">তথ্য গুগল ড্রাইভে পাঠান</h3>
+            <p class="text-[11px] text-indigo-700">সকল বাধ্যতামূলক ফিল্ড পূরণ করে সেভ করুন</p>
+          </div>
+          <button onclick="submitDataToGoogleSheet()" id="btnSaveData" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i> সেভ করুন
+          </button>
+        </div>
+
+        <!-- Dynamic Inputs -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+
+          <!-- Section 1: Guarantor -->
+          <div class="space-y-3">
+            <h3 class="text-xs font-bold text-emerald-800 border-b pb-1">১. জামিনদারের তথ্য <span class="text-red-500">*</span></h3>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">জামিনদারের নাম <span class="text-red-500">*</span></label>
+                <input type="text" id="j_name" oninput="updateDocument()" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">কর্মচারীর সাথে সম্পর্ক <span class="text-red-500">*</span></label>
+                <select id="j_relation" onchange="updateDocument()" class="w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
+                  <option value="">সম্পর্ক নির্বাচন করুন</option>
+                  <option value="বাবা">বাবা</option>
+                  <option value="ভাই">ভাই</option>
+                  <option value="শ্বশুর">শ্বশুর</option>
+                  <option value="মা">মা</option>
+                  <option value="স্বামী">স্বামী</option>
+                  <option value="স্ত্রী">স্ত্রী</option>
+                  <option value="বোন">বোন</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">পিতার নাম <span class="text-red-500">*</span></label>
+                <input type="text" id="j_father" oninput="updateDocument()" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">মাতার নাম <span class="text-red-500">*</span></label>
+                <input type="text" id="j_mother" oninput="updateDocument()" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-600 mb-1">ভোটার আইডি (NID) <span class="text-red-500">*</span></label>
+              <input type="text" id="j_nid" oninput="updateDocument()" placeholder="বাংলায় NID নম্বর লিখুন" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-0.5">গ্রাম <span class="text-red-500">*</span></label>
+                <input type="text" id="j_village" placeholder="গ্রাম" oninput="updateDocument()" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-xs">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-0.5">ডাকঘর <span class="text-red-500">*</span></label>
+                <input type="text" id="j_post" placeholder="ডাকঘর" oninput="updateDocument()" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-xs">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-0.5">জেলা <span class="text-red-500">*</span></label>
+                <select id="j_district" class="w-full select2-dist">
+                  <option value="">জেলা নির্বাচন করুন</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-0.5">উপজেলা <span class="text-red-500">*</span></label>
+                <select id="j_upazila" class="w-full select2-upz">
+                  <option value="">উপজেলা নির্বাচন করুন</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Employee -->
+          <div class="space-y-3 pt-2">
+            <h3 class="text-xs font-bold text-teal-800 border-b pb-1">২. কর্মচারীর (আবেদনকারী) তথ্য <span class="text-red-500">*</span></h3>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">কর্মচারীর নাম <span class="text-red-500">*</span></label>
+                <input type="text" id="e_name" oninput="updateDocument()" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">পদের নাম <span class="text-red-500">*</span></label>
+                <select id="e_designation" onchange="updateDocument()" class="w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
+                  <option value="">পদবী নির্বাচন করুন</option>
+                  <option value="অফিসার (লোন)">অফিসার (লোন)</option>
+                  <option value="অফিসার (অ্যাকাউন্টস)">অফিসার (অ্যাকাউন্টস)</option>
+                  <option value="শাখা ব্যবস্থাপক">শাখা ব্যবস্থাপক</option>
+                  <option value="আঞ্চলিক ব্যবস্থাপক">আঞ্চলিক ব্যবস্থাপক</option>
+                  <option value="সহকারী পরিচালক">সহকারী পরিচালক</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">পিতার নাম <span class="text-red-500">*</span></label>
+                <input type="text" id="e_father" oninput="updateDocument()" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">ভোটার আইডি (NID) <span class="text-red-500">*</span></label>
+                <input type="text" id="e_nid" oninput="updateDocument()" placeholder="বাংলায় NID নম্বর লিখুন" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-0.5">গ্রাম <span class="text-red-500">*</span></label>
+                <input type="text" id="e_village" placeholder="গ্রাম" oninput="updateDocument()" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-xs">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-0.5">ডাকঘর <span class="text-red-500">*</span></label>
+                <input type="text" id="e_post" placeholder="ডাকঘর" oninput="updateDocument()" class="bangla-only w-full p-2 bg-slate-50 border rounded-lg text-xs">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-0.5">জেলা <span class="text-red-500">*</span></label>
+                <select id="e_district" class="w-full select2-dist">
+                  <option value="">জেলা নির্বাচন করুন</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-0.5">উপজেলা <span class="text-red-500">*</span></label>
+                <select id="e_upazila" class="w-full select2-upz">
+                  <option value="">উপজেলা নির্বাচন করুন</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE: PREVIEW CONTAINER -->
+      <div id="previewWrapper" class="lg:col-span-7 print-container-wrapper">
+        <div class="bg-slate-300 p-4 md:p-8 rounded-2xl flex justify-center print:bg-white print:p-0">
+          <div id="previewCanvas" class="doc-body bg-white shadow-2xl p-6 md:p-12 text-slate-900 w-full max-w-[750px]">
+
+            <div class="print-spacer hidden"></div>
+
+            <div class="text-center pb-4 mb-6">
+              <h1 class="text-2xl font-bold">জামানতনামা</h1>
+            </div>
+
+            <!-- Paragraph 1 -->
+            <p class="doc-paragraph">
+              আমি <span class="blank-field" id="p_j_name">..............</span> , 
+              পিতা : <span class="blank-field" id="p_j_father">..............</span> , 
+              মাতা : <span class="blank-field" id="p_j_mother">..............</span> 
+              (সম্পর্ক: <span class="blank-field" id="p_j_relation">..............</span>) , 
+              ভোটার আইডি নং: <span class="blank-field" id="p_j_nid">..............</span> , 
+              বর্তমান ঠিকানা : গ্রাম : <span class="blank-field" id="p_j_village">..............</span> , 
+              ডাকঘর : <span class="blank-field" id="p_j_post">..............</span> , 
+              উপজেলা : <span class="blank-field" id="p_j_upazila">..............</span> , 
+              জেলা : <span class="blank-field" id="p_j_district">..............</span>।
+            </p>
+
+            <!-- Paragraph 2 -->
+            <p class="doc-paragraph">
+              রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন এ <span class="blank-field" id="p_e_designation">..............</span> 
+              পদে নিয়োজিত জনাব <span class="blank-field" id="p_e_name">..............</span> , 
+              পিতা: <span class="blank-field" id="p_e_father">..............</span> , 
+              গ্রাম : <span class="blank-field" id="p_e_village">..............</span> , 
+              ডাকঘর : <span class="blank-field" id="p_e_post">..............</span> , 
+              উপজেলা : <span class="blank-field" id="p_e_upazila">..............</span> , 
+              জেলা : <span class="blank-field" id="p_e_district">..............</span> ।
+            </p>
+
+            <p class="doc-paragraph">
+              এর জন্য এবং তাহার পক্ষে সার্বিক দায়-দায়িত্ব স্বীকার করিয়া জামিনদার হিসাবে নিম্ন লিখিত শর্তাবলী সাপেক্ষে অঙ্গীকারবদ্ধ হইলাম :
+            </p>
+
+            <p class="doc-paragraph font-bold mt-3 mb-2">শর্তাবলী :</p>
+
+            <!-- Paragraph 1 of Conditions -->
+            <p class="doc-paragraph">
+              <strong>১|</strong> যেহেতু রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন জনাব <span class="blank-field" id="p_c1_e_name">..............</span> কে <span class="blank-field" id="p_c1_e_designation">..............</span> পদে চাকুরী প্রদান করিয়াছে হেতু আমি জনাব <span class="blank-field" id="p_c1_j_name">..............</span> তাহার জন্য জামিনদার বহাল থাকিয়া রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন বরাবর জামানতনামা প্রদান করলাম।
+            </p>
+
+            <p class="doc-paragraph">
+              <strong>২|</strong> রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন এ চাকুরীরত থাকাকালীন উল্লিখিত ব্যক্তি কর্তৃক অবহেলা, চুরি, স্বীয়-আদায়কৃত ঋণাদিতে কোন কার্য সম্পাদনে ফৌজদারী বা দেওয়ানী আইন ভঙ্গ শাস্তিমূলক অপরাধে প্রত্যক্ষ বা পরোক্ষ রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন এর কোন ক্ষতিসাধন, দেশের প্রচলিত আইন কানুন, নিয়ম শৃঙ্খলা ও বিধি বিধানের পরিপন্থী কোন আইনি বা অনৈতিক কাজে নিজেকে জড়িত করা, রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন এর প্রাতিষ্ঠানিক বা প্রশাসনিক আইন বা বেআইনি বা নিয়ম শৃঙ্খলা পরিপন্থী কোন কর্মে জড়িত হওয়া অথবা প্রত্যক্ষ বা পরোক্ষ রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন এর আর্থিক ক্ষতি সাধন করা, ব্যাংক হতে নগদ উত্তোলন বা নগদ অর্থ অথবা অন্যবিধ উপায়ে আর্থিক সুবিধা লাভ কিংবা অর্থ আত্মসাৎ করা, রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন এর কোন স্থাবর বা অস্থাবর সম্পত্তি বিনষ্ট বা হস্তগত করা কিংবা তার ক্ষতি সাধন করা, রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন এর সুনাম নষ্ট করা এবং রাষ্ট্রবিরোধী কোন কার্যে জড়িত হওয়া বা প্রত্যক্ষ ও পরোক্ষ ইত্যাদি কোন প্রকার কাজে দায়ী বা দোষী হইলে আমি তাহার সকল প্রকার দায় দায়িত্ব বহন করিব বা করিতে আইনতঃ বাধ্য থাকিব এবং রুরাল রিকনস্ট্রাকশন ফাউন্ডেশন এর দাবীকৃত বা আদালত কর্তৃক ঘোষিত ও নির্ধারিত কোন অংকের আর্থিক ক্ষতিপূরণ দিতে বাধ্য থাকিব।
+            </p>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby23vqmDJk7anzoKf0K8VIAJCHr_xdfqRP3tnQrCghdyLjYmNbdQb6UMxuAwPyTjuI_UA/exec"; 
+    let globalSheetData = [];
+
+    // Geo Data
+    const bdGeoData = {
+      "যশোর": ["যশোর সদর", "অভয়নগর", "বাঘারপাড়া", "চৌগাছা", "ঝিকরগাছা", "কেশবপুর", "মনিরামপুর", "শার্শা"],
+      "খুলনা": ["খুলনা সদর", "বটিয়াঘাটা", "দাকোপ", "ডুমুরিয়া", "দিঘলিয়া", "কয়রা", "পাইকগাছা", "রূপসা", "তেরখাদা", "খান জাহান আলী", "দৌলতপুর", "খালিশপুর", "সোনাডাঙ্গা"],
+      "সাতক্ষীরা": ["সাতক্ষীরা সদর", "আশাশুনি", "দেবহাটা", "কলারোয়া", "কালীগঞ্জ", "শ্যামনগর", "তালা"],
+      "বাগেরহাট": ["বাগেরহাট সদর", "চিতলমারী", "ফকিরহাট", "কচুয়া", "মোল্লাহাট", "মংলা", "মোড়েলগঞ্জ", "রামপাল", "শরণখোলা"],
+      "ঝিনাইদহ": ["ঝিনাইদহ সদর", "হরিণাকুণ্ডু", "কালীগঞ্জ", "কোটচাঁদপুর", "মহেশপুর", "শৈলকুপা"],
+      "মাগুরা": ["মাগুরা সদর", "মহম্মদপুর", "শালিখা", "শ্রীপুর"],
+      "নড়াইল": ["নড়াইল সদর", "কালিয়া", "লোহাগড়া"],
+      "কুষ্টিয়া": ["কুষ্টিয়া সদর", "কুমারখালী", "খোকসা", "মিরপুর", "দৌলতপুর", "ভেড়ামারা"],
+      "মেহেরপুর": ["মেহেরপুর সদর", "গাংনী", "মুজিবনগর"],
+      "চুয়াডাঙ্গা": ["চুয়াডাঙ্গা সদর", "আলমডাঙ্গা", "দামুড়হুদা", "জীবননগর"],
+      "ঢাকা": ["ঢাকা সদর", "ধামরাই", "দোহার", "কেরানীগঞ্জ", "নবাবগঞ্জ", "সাভার", "মিরপুর", "ধানমন্ডি", "গুলশান", "উত্তরা", "তেজগাঁও"],
+      "গাজীপুর": ["গাজীপুর সদর", "কালিয়াকৈর", "কালীগঞ্জ", "কাপাসিয়া", "শ্রীপুর"],
+      "নারায়ণগঞ্জ": ["নারায়ণগঞ্জ সদর", "আড়াইহাজার", "বন্দর", "রূপগঞ্জ", "সোনারগাঁও"],
+      "মুন্সীগঞ্জ": ["মুন্সীগঞ্জ সদর", "গজারিয়া", "লোহাজং", "সিরাজদিখান", "শ্রীনগর", "টঙ্গীবাড়ী"],
+      "মানিকগঞ্জ": ["মানিকগঞ্জ সদর", "সিংগাইর", "শিবালয়", "ঘিওর", "দৌলতপুর", "সাটুরিয়া", "হরিরামপুর"],
+      "নরসিংদী": ["নরসিংদী সদর", "বেলাবো", "মনোহরদী", "পলাশ", "রায়পুরা", "শিবপুর"],
+      "ফরিদপুর": ["ফরিদপুর সদর", "আলফাডাঙ্গা", "ভাঙ্গা", "বোয়ালমারী", "চরভদ্রাসন", "মধুখালী", "নগরকান্দা", "সদরপুর", "সালথা"],
+      "মাদারীপুর": ["মাদারীপুর সদর", "কালকিনি", "রাজৈর", "শিবচর"],
+      "শরীয়তপুর": ["শরীয়তপুর সদর", "ডামুড্যা", "গোসাইরহাট", "নলছিটি", "ভেদরগঞ্জ", "জাজিরা"],
+      "রাজবাড়ী": ["রাজবাড়ী সদর", "বালিয়াকান্দি", "গোয়ালন্দ", "পাংশা", "কালুখালী"],
+      "গোপালগঞ্জ": ["গোপালগঞ্জ সদর", "কাশিয়ানী", "কোটালীপাড়া", "মুকসুদপুর", "টুঙ্গিপাড়া"],
+      "ময়মনসিংহ": ["ময়মনসিংহ সদর", "ভালুকা", "ত্রিশাল", "হালুয়াঘাট", "মুক্তাগাছা", "ধোবাউড়া", "ফুলবাড়িয়া", "গফরগাঁও", "গৌরীপুর", "ঈশ্বরগঞ্জ", "নান্দাইল", "ফুলপুর", "তারাকান্দা"],
+      "টাঙ্গাইল": ["টাঙ্গাইল সদর", "বাসাইল", "ভুয়াপুর", "ধনবাড়ী", "ঘাটাইল", "গোপালপুর", "কালিহাতী", "মির্জাপুর", "নাগরপুর", "সখীপুর", "দেলদুয়ার"],
+      "জামালপুর": ["জামালপুর সদর", "বক্সীগঞ্জ", "দেওয়ানগঞ্জ", "ইসলামপুর", "মাদারগঞ্জ", "মেলান্দহ", "সরিষাবাড়ী"],
+      "শেরপুর": ["শেরপুর সদর", "ঝিনাইগাতী", "নকলা", "নালীতাবাড়ী", "শ্রীবরদী"],
+      "নেত্রকোনা": ["নেত্রকোনা সদর", "আটপাড়া", "বারহাট্টা", "দুর্গাপুর", "খালিয়াজুরী", "কলমাকান্দা", "কেন্দুয়া", "মদন", "মোহনগঞ্জ", "পূর্বধলা"],
+      "চট্টগ্রাম": ["চট্টগ্রাম সদর", "আনওয়ারা", "বাঁশখালী", "বোয়ালখালী", "চন্দনাইশ", "ফটিকছড়ি", "হাঠহাজারী", "লোহাগাড়া", "মিরসরাই", "পটিয়া", "রাঙ্গুনিয়া", "রাউজান", "সন্দ্বীপ", "সাতকানিয়া", "সীতাকুণ্ড"],
+      "কক্সবাজার": ["কক্সবাজার সদর", "চকোরিয়া", "মহেশখালী", "টেকনাফ", "উখিয়া", "কুতুবদিয়া", "পেকুয়া", "রামু"],
+      "কুমিল্লা": ["কুমিল্লা সদর", "বরুড়া", "চান্দিনা", "দাউদকান্দি", "দেবীদ্বার", "হোমনা", "লাকসাম", "মুরাদনগর", "নাঙ্গলকোট", "মেঘনা", "তিতাস", "মনোহরগঞ্জ"],
+      "ব্রাহ্মণবাড়িয়া": ["ব্রাহ্মণবাড়িয়া সদর", "আশুগঞ্জ", "বাঞ্ছারামপুর", "কসবা", "নবীনগর", "নাসিরনগর", "সরাইল", "আখাউড়া"],
+      "চাঁদপুর": ["চাঁদপুর সদর", "ফরিদগঞ্জ", "হাইমচর", "হাজীগঞ্জ", "কচুয়া", "মতলব উত্তর", "মতলব দক্ষিণ", "শাহরাস্তি"],
+      "ফেনী": ["ফেনী সদর", "ছাগলনাইয়া", "দাগনভূঞা", "পরশুরাম", "ফুলগাজী", "সোনাগাজী"],
+      "নোখালী": ["নোয়াখালী সদর", "বেগমগঞ্জ", "চাটখিল", "কোম্পানীগঞ্জ", "হাতিয়া", "সেনবাগ", "সুবর্ণচর", "কবিরহাট"],
+      "লক্ষ্মীপুর": ["লক্ষ্মীপুর সদর", "রায়পুর", "রামগঞ্জ", "রামগতি", "কমলনগর"],
+      "সিলেট": ["সিলেট সদর", "বিয়ানীবাজার", "বিশ্বনাথ", "গোয়াইনঘাট", "জৈন্তাপুর", "কানাইঘাট", "কোম্পানীগঞ্জ", "গোলাপগঞ্জ", "জকিগঞ্জ", "দক্ষিণ সুরমা"],
+      "মৌলভীবাজার": ["মৌলভীবাজার সদর", "বড়লেখা", "জুড়ী", "কমলগঞ্জ", "কূলৌড়া", "রাজনগর", "শ্রীমঙ্গল"],
+      "হবিগঞ্জ": ["হবিগঞ্জ সদর", "আজমিরীগঞ্জ", "বাহুবল", "বানিয়াচং", "চুনারুঘাট", "নবীগঞ্জ", "মাধবপুর", "লাখাই"],
+      "সুনামগঞ্জ": ["সুনামগঞ্জ সদর", "ছাতক", "দোয়ারাবাজার", "ধর্মপাশা", "দিরাই", "জগন্নাথপুর", "জামালগঞ্জ", "শাল্লা", "তাহিরপুর"],
+      "রাজশাহী": ["রাজশাহী সদর", "বাঘা", "চারঘাট", "দুর্গাপুর", "গোদাগাড়ী", "মোহনপুর", "পবা", "পুঠিয়া", "তানোর", "বাগমারা"],
+      "বগুড়া": ["বগুড়া সদর", "আদমদীঘি", "ধুনট", "দুপচাঁচিয়া", "গাবতলী", "কাহালু", "নন্দীগ্রাম", "সারিয়াকান্দি", "শেরপুর", "শিবগঞ্জ", "সোনাতলা"],
+      "পাবনা": ["পাবনা সদর", "আটঘরিয়া", "বেড়া", "ভাঙ্গুড়া", "চাটমোহর", "ফরিদপুর", "ঈশ্বরদী", "সাঁথিয়া", "সুজানগর"],
+      "সিরাজগঞ্জ": ["সিরাজগঞ্জ সদর", "বেলকুচি", "চৌহালী", "কামারখন্দ", "কাজীপুর", "রায়গঞ্জ", "শাহজাদপুর", "তারাশ", "উল্লাপাড়া"],
+      "নওগাঁ": ["নওগাঁ সদর", "আত্রাই", "বদলগাছী", "ধামইরহাট", "মান্দা", "মহাদেবপুর", "নিয়ামাতপুর", "পত্নীতলা", "পোরশা", "রাণীনগর", "সাপাহার"],
+      "নাটোর": ["নাটোর সদর", "বাগাতিপাড়া", "বড়াইগ্রাম", "গুরুদাসপুর", "লালপুর", "সিংড়া"],
+      "চাঁপাইনবাবগঞ্জ": ["চাঁপাইনবাবগঞ্জ সদর", "গোমস্তাপুর", "হাতিবান্ধা", "নাচোল", "শিবগঞ্জ"],
+      "জয়পুরহাট": ["জয়পুরহাট সদর", "আক্কেলপুর", "কালাই", "ক্ষেতলাল", "পাঁচবিবি"],
+      "রংপুর": ["রংপুর সদর", "বদরগঞ্জ", "গঙ্গাচড়া", "কাউনিয়া", "মিঠাপুকুর", "পীরগাছা", "পীরগঞ্জ", "তারাগঞ্জ"],
+      "দিনাজপুর": ["দিনাজপুর সদর", "বিরামপুর", "বীরগঞ্জ", "বোচাগঞ্জ", "ফুলবাড়ী", "ঘোড়াঘাট", "হাকিমপুর", "কাহারোল", "খানসামা", "নবাবগঞ্জ", "পার্বতীপুর"],
+      "গাইবান্ধা": ["গাইবান্ধা সদর", "ফুলছড়ি", "গোবিন্দগঞ্জ", "সাদুল্লাপুর", "সাঘাটা", "সুন্দরগঞ্জ", "পলাশবাড়ী"],
+      "কুড়িগ্রাম": ["কুড়িগ্রাম সদর", "ভুরুঙ্গামারী", "চর রাজিবপুর", "চিলমারী", "ফুলবাড়ী", "নাগেশ্বরী", "রাজারহাট", "রৌমারী", "উলিপুর"],
+      "নীলফামারী": ["নীলফামারী সদর", "ডিমলা", "ডোমোর", "জলঢাকা", "কিশোরগঞ্জ", "সৈয়দপুর"],
+      "পঞ্চগড়": ["পঞ্চগড় সদর", "আটওয়ারী", "বোদা", "দেবীগঞ্জ", "তেঁতুলিয়া"],
+      "ঠাকুরগাঁও": ["ঠাকুরগাঁও সদর", "বালিয়াডাঙ্গী", "হরিপুর", "পীরগঞ্জ", "রাণীশংকৈল"],
+      "লালমনিরহাট": ["লালমনিরহাট সদর", "আদিতমারী", "হাতিবান্ধা", "কালীগঞ্জ", "পাটগ্রাম"],
+      "বরিশাল": ["বরিশাল সদর", "আগৈলঝাড়া", "বাবুগঞ্জ", "বাকেরগঞ্জ", "বানারীপাড়া", "গৌরনদী", "হিজলা", "মেহেন্দিগঞ্জ", "মুলাদী", "উজিরপুর"],
+      "পটুয়াখালী": ["পটুয়াখালী সদর", "বাউফল", "দশমিনা", "গলাচিপা", "কলাপাড়া", "মির্জাগঞ্জ", "দুুমকী", "রাঙ্গাবালী"],
+      "ভোলা": ["ভোলা সদর", "বোরহানউদ্দিন", "চরফ্যাশন", "দৌলতখান", "লালমোহন", "মনপুরা", "তজুমুদ্দিন"],
+      "পিরোজপুর": ["পিরোজপুর সদর", "ভাণ্ডারিয়া", "কাউখালী", "মঠবাড়িয়া", "নাজিরপুর", "নেছারাবাদ", "ইন্দুরকানী"],
+      "বরগুনা": ["বরগুনা সদর", "আমতলী", "বামনা", "বেতাগী", "পাথরঘাটা", "তালতলী"],
+      "ঝালকাঠি": ["ঝালকাঠি সদর", "কাঠালিয়া", "নলছিটি", "রাজাপুর"]
+    };
+
+    $(document).ready(function() {
+      populateDistricts();
+
+      $('.select2-dist, .select2-upz').select2({ width: '100%' });
+
+      $('#staffDataDropdown').select2({
+        placeholder: "স্টাফের নাম, Unique ID বা NID সিলেক্ট করুন...",
+        allowClear: true,
+        width: '100%'
+      });
+
+      // RESTRICT ENGLISH INPUT IN REAL TIME
+      $(document).on('input', '.bangla-only', function() {
+        let regex = /[a-zA-Z]/g;
+        if (regex.test($(this).val())) {
+          alert("⚠️ ইংরেজি ফন্ট বা বর্ণ গ্রহণযোগ্য নয়! অনুগ্রহ করে বাংলায় লিখুন।");
+          $(this).val($(this).val().replace(regex, ''));
+        }
+      });
+
+      $('#e_district').on('change', function() {
+        populateUpazila('e', $(this).val());
+        updateDocument();
+      });
+
+      $('#j_district').on('change', function() {
+        populateUpazila('j', $(this).val());
+        updateDocument();
+      });
+
+      $('#e_upazila, #j_upazila').on('change', function() {
+        updateDocument();
+      });
+
+      $('#staffDataDropdown').on('change', function() {
+        loadSelectedStaffData();
+      });
+
+      fetchStaffListFromSheet();
+    });
+
+    function populateDistricts() {
+      let options = '<option value="">জেলা নির্বাচন করুন</option>';
+      Object.keys(bdGeoData).sort().forEach(dist => {
+        options += `<option value="${dist}">${dist}</option>`;
+      });
+      $('#j_district, #e_district').html(options);
+    }
+
+    function populateUpazila(prefix, selectedDist) {
+      let upzSelect = $(`#${prefix}_upazila`);
+      upzSelect.empty().append('<option value="">উপজেলা নির্বাচন করুন</option>');
+
+      if (selectedDist && bdGeoData[selectedDist]) {
+        bdGeoData[selectedDist].forEach(upz => {
+          upzSelect.append(`<option value="${upz}">${upz}</option>`);
+        });
+      }
+      upzSelect.trigger('change.select2');
+    }
+
+    function updateDocument() {
+      const getVal = id => $(`#${id}`).val() || '..............';
+
+      $('#p_j_name, #p_c1_j_name').text(getVal('j_name'));
+      $('#p_j_father').text(getVal('j_father'));
+      $('#p_j_mother').text(getVal('j_mother'));
+      $('#p_j_nid').text(getVal('j_nid'));
+      $('#p_j_village').text(getVal('j_village'));
+      $('#p_j_post').text(getVal('j_post'));
+      $('#p_j_upazila').text(getVal('j_upazila'));
+      $('#p_j_district').text(getVal('j_district'));
+      $('#p_j_relation').text(getVal('j_relation'));
+
+      $('#p_e_name, #p_c1_e_name').text(getVal('e_name'));
+      $('#p_e_designation, #p_c1_e_designation').text(getVal('e_designation'));
+      $('#p_e_father').text(getVal('e_father'));
+      $('#p_e_village').text(getVal('e_village'));
+      $('#p_e_post').text(getVal('e_post'));
+      $('#p_e_upazila').text(getVal('e_upazila'));
+      $('#p_e_district').text(getVal('e_district'));
+    }
+
+    // CHECK DUPLICATE NID
+    function isDuplicateNID(eNid, jNid) {
+      if (!globalSheetData || globalSheetData.length <= 1) return false;
+
+      for (let i = 1; i < globalSheetData.length; i++) {
+        const row = globalSheetData[i];
+        const sheetENid = row[8] ? String(row[8]).trim() : "";
+        const sheetJNid = row[13] ? String(row[13]).trim() : "";
+
+        if (eNid && (eNid === sheetENid || eNid === sheetJNid)) return true;
+        if (jNid && (jNid === sheetENid || jNid === sheetJNid)) return true;
+      }
+      return false;
+    }
+
+    // GENERATE SERIAL UNIQUE ID (e.g. RRF-Agreement-000001)
+    function generateUniqueID() {
+      let nextSerial = 1;
+      if (globalSheetData && globalSheetData.length > 1) {
+        nextSerial = globalSheetData.length; // Next available index after header
+      }
+      const paddedSerial = String(nextSerial).padStart(6, '0');
+      return `RRF-Agreement-${paddedSerial}`;
+    }
+
+    // SAVE DATA TO GOOGLE SHEET
+    function submitDataToGoogleSheet() {
+      const requiredFields = [
+        { id: 'j_name', label: 'জামিনদারের নাম' },
+        { id: 'j_relation', label: 'কর্মচারীর সাথে সম্পর্ক' },
+        { id: 'j_father', label: 'জামিনদারের পিতার নাম' },
+        { id: 'j_mother', label: 'জামিনদারের মাতার নাম' },
+        { id: 'j_nid', label: 'জামিনদারের NID' },
+        { id: 'j_village', label: 'জামিনদারের গ্রাম' },
+        { id: 'j_post', label: 'জামিনদারের ডাকঘর' },
+        { id: 'j_district', label: 'জামিনদারের জেলা' },
+        { id: 'j_upazila', label: 'জামিনদারের উপজেলা' },
+        { id: 'e_name', label: 'কর্মচারীর নাম' },
+        { id: 'e_designation', label: 'কর্মচারীর পদবী' },
+        { id: 'e_father', label: 'কর্মচারীর পিতার নাম' },
+        { id: 'e_nid', label: 'কর্মচারীর NID' },
+        { id: 'e_village', label: 'কর্মচারীর গ্রাম' },
+        { id: 'e_post', label: 'কর্মচারীর ডাকঘর' },
+        { id: 'e_district', label: 'কর্মচারীর জেলা' },
+        { id: 'e_upazila', label: 'কর্মচারীর উপজেলা' }
+      ];
+
+      for (let field of requiredFields) {
+        let val = $(`#${field.id}`).val();
+        if (!val || val.trim() === "") {
+          alert(`⚠️ দুঃখিত! "${field.label}" ফিল্ডটি পূরণ করা বাধ্যতামূলক।`);
+          $(`#${field.id}`).focus();
+          return;
+        }
+      }
+
+      const eNid = $('#e_nid').val().trim();
+      const jNid = $('#j_nid').val().trim();
+
+      if (isDuplicateNID(eNid, jNid)) {
+        alert("⚠️ Duplicate NID: এই NID নম্বরের ডাটা ইতোমধ্যে গুগল শিটে জমা রয়েছে!");
+        return;
+      }
+
+      // Generate Sequential Unique ID (RRF-Agreement-000001)
+      const uniqueID = generateUniqueID();
+
+      const payload = {
+        unique_id: uniqueID,
+        e_name: $('#e_name').val(),
+        e_designation: $('#e_designation').val(),
+        e_father: $('#e_father').val(),
+        e_nid: eNid,
+        e_village: $('#e_village').val(),
+        e_post: $('#e_post').val(),
+        e_upazila: $('#e_upazila').val(),
+        e_district: $('#e_district').val(),
+        j_name: $('#j_name').val(),
+        j_relation: $('#j_relation').val(),
+        j_father: $('#j_father').val(),
+        j_mother: $('#j_mother').val(),
+        j_nid: jNid,
+        j_village: $('#j_village').val(),
+        j_post: $('#j_post').val(),
+        j_upazila: $('#j_upazila').val(),
+        j_district: $('#j_district').val()
+      };
+
+      $('#btnSaveData').html('<i class="fa-solid fa-spinner animate-spin"></i> সেভ হচ্ছে...').prop('disabled', true);
+
+      const formData = new URLSearchParams();
+      for (const key in payload) {
+        formData.append(key, payload[key]);
+      }
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: formData
+      })
+      .then(() => {
+        alert(`✅ তথ্য সফলভাবে সংরক্ষিত হয়েছে!\nআইডি (Unique ID): ${uniqueID}`);
+        $('#btnSaveData').html('<i class="fa-solid fa-cloud-arrow-up"></i> সেভ করুন').prop('disabled', false);
+        setTimeout(fetchStaffListFromSheet, 1500);
+      })
+      .catch(err => {
+        alert(`✅ তথ্য সফলভাবে জমা হয়েছে!\nআইডি (Unique ID): ${uniqueID}`);
+        $('#btnSaveData').html('<i class="fa-solid fa-cloud-arrow-up"></i> সেভ করুন').prop('disabled', false);
+        setTimeout(fetchStaffListFromSheet, 1500);
+      });
+    }
+
+    // SWITCH MODES
+    function switchMode(mode) {
+      if (mode === 'admin') {
+        const password = prompt("অ্যাডমিন পাসওয়ার্ড লিখুন:");
+        if (password === "1234") {
+          $('#adminPanelSection').removeClass('hidden');
+          $('#btnPrintBtn').removeClass('hidden');
+          $('#formContainer').addClass('hidden');
+          $('#previewWrapper').removeClass('lg:col-span-7').addClass('lg:col-span-12');
+          fetchStaffListFromSheet();
+        } else if(password !== null) {
+          alert("ভুল পাসওয়ার্ড!");
+        }
+      } else {
+        $('#adminPanelSection').addClass('hidden');
+        $('#btnPrintBtn').addClass('hidden');
+        $('#formContainer').removeClass('hidden');
+        $('#previewWrapper').removeClass('lg:col-span-12').addClass('lg:col-span-7');
+      }
+    }
+
+    // FETCH DATA FROM GOOGLE SHEET
+    function fetchStaffListFromSheet() {
+      const freshUrl = SCRIPT_URL + (SCRIPT_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+
+      fetch(freshUrl)
+        .then(res => res.json())
+        .then(data => {
+          globalSheetData = data;
+          let dropdown = $('#staffDataDropdown');
+          dropdown.empty().append('<option value="">স্টাফের নাম, Unique ID বা NID সিলেক্ট করুন...</option>');
+          
+          data.forEach((row, idx) => {
+            if (idx > 0 && row[1]) {
+              const uniqueId = row[0] || 'ID নেই';
+              const name = row[1];
+              const desig = row[2] || 'পদবী নেই';
+              const nid = row[8] || row[13] || '';
+              dropdown.append(`<option value="${idx}">${name} - ${desig} (${uniqueId})</option>`);
+            }
+          });
+          dropdown.trigger('change.select2');
+        })
+        .catch(err => console.error("Error fetching data:", err));
+    }
+
+    // LOAD SELECTED STAFF DATA TO PREVIEW
+    function loadSelectedStaffData() {
+      const selectedIndex = $('#staffDataDropdown').val();
+      if (!selectedIndex || selectedIndex === "") return;
+
+      const row = globalSheetData[selectedIndex];
+
+      $('#e_name').val(row[1] || '');
+      $('#e_designation').val(row[2] || '');
+      $('#e_father').val(row[3] || '');
+      $('#e_village').val(row[4] || '');
+      $('#e_post').val(row[5] || '');
+
+      const eDist = row[7] || '';
+      $('#e_district').val(eDist).trigger('change.select2');
+      populateUpazila('e', eDist);
+      $('#e_upazila').val(row[6] || '').trigger('change.select2');
+
+      $('#e_nid').val(row[8] || '');
+
+      $('#j_name').val(row[9] || '');
+      $('#j_relation').val(row[10] || '');
+      $('#j_father').val(row[11] || '');
+      $('#j_mother').val(row[12] || '');
+      $('#j_nid').val(row[13] || '');
+      $('#j_village').val(row[14] || '');
+      $('#j_post').val(row[15] || '');
+
+      const jDist = row[17] || '';
+      $('#j_district').val(jDist).trigger('change.select2');
+      populateUpazila('j', jDist);
+      $('#j_upazila').val(row[16] || '').trigger('change.select2');
+
+      updateDocument();
+    }
+  </script>
+</body>
+</html>
